@@ -83,7 +83,6 @@ def train_batch(data, config, optimizer, model) -> dict:
 
 
 def evaluate(split: str, loader, model, config):
-    torch.cuda.empty_cache()
     stat = {'score': None, 'loss': None}
     if loader.get(split) is None:
         return stat
@@ -174,6 +173,7 @@ def main(config_name, config_path, seed: int):
             # train a batch
             train_batch(data, config, optimizer, model)
 
+        torch.cuda.empty_cache()
         # evaluate
         epoch_train_stat = evaluate('eval_train', loader, model, config)
         val_stat = evaluate('val', loader, model, config)
