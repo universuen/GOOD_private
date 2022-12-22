@@ -2,12 +2,11 @@ import context
 
 from pathlib import Path
 from multiprocessing import Process
-from threading import Thread
 
 from GOOD.kernel.main import *
 
 CONFIG_PATH = 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
-NUM_TASKS = 3
+NUM_TASKS = 1
 
 
 def split(list_: list, chunk_size: int):
@@ -39,16 +38,5 @@ def train_and_test(seed: int):
 
 
 if __name__ == '__main__':
-    processes = [
-        Thread(
-            target=train_and_test,
-            args=(i,)
-        )
-        for i in range(10)
-    ]
-
-    for ps in split(processes, NUM_TASKS):
-        for p in ps:
-            p.start()
-        for p in ps:
-            p.join()
+    for i in range(10):
+        train_and_test(i)
