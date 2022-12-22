@@ -180,6 +180,7 @@ def main(config_name, config_path, seed: int):
         test_stat = evaluate('test', loader, model, config)
 
         print(
+            config_name,
             training_bar(
                 epoch,
                 total_epochs=config.train.max_epoch,
