@@ -13,7 +13,7 @@ from GOOD.utils.evaluation import eval_data_preprocess, eval_score
 from history import History
 
 CONFIG_NAME_PATH_PAIRS = {
-    # 'erm_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
+    'erm_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
     'erm_cmnist': 'configs/GOOD_configs/GOODCMNIST/color/covariate/ERM.yaml',
     'erm_zinc': 'configs/GOOD_configs/GOODZINC/scaffold/covariate/ERM.yaml',
     'erm_pcba': 'configs/GOOD_configs/GOODPCBA/scaffold/covariate/ERM.yaml',
@@ -84,7 +84,6 @@ def train_batch(data, config, optimizer, model) -> dict:
 
 @torch.no_grad()
 def evaluate(split: str, loader, model, config):
-    print(torch.cuda.memory_allocated(device=config.device))
     stat = {'score': None, 'loss': None}
     if loader.get(split) is None:
         return stat
@@ -94,7 +93,7 @@ def evaluate(split: str, loader, model, config):
     mask_all = []
     pred_all = []
     target_all = []
-    print(torch.cuda.memory_allocated(device=config.device))
+
     for data in loader[split]:
         data = data.to(config.device)
         print(torch.cuda.memory_allocated(device=config.device))
@@ -175,7 +174,6 @@ def main(config_name, config_path, seed: int):
 
             # train a batch
             train_batch(data, config, optimizer, model)
-        print(torch.cuda.memory_allocated(device=config.device))
 
         # evaluate
         epoch_train_stat = evaluate('eval_train', loader, model, config)
