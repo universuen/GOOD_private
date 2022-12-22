@@ -163,7 +163,7 @@ def main(config_name, config_path, seed: int):
         config_name=config_name,
     )
     # train the model
-    print(seed, config_name, 'Started training')
+    print(seed, config_name, 'Started training', flush=True)
     for epoch in range(config.train.ctn_epoch, config.train.max_epoch):
         config.train.epoch = epoch
 
@@ -189,7 +189,8 @@ def main(config_name, config_path, seed: int):
                 training_auc=epoch_train_stat['score'],
                 validating_auc=val_stat['score'],
                 test_auc=test_stat['score'],
-            )
+            ),
+            flush=True,
         )
         # adjust lr
         scheduler.step()
@@ -200,7 +201,7 @@ def main(config_name, config_path, seed: int):
 
     analyze_results_by_ratio(config_name)
 
-    print(seed, config_name, 'Done!')
+    print(seed, config_name, 'Done!', flush=True)
 
 
 if __name__ == '__main__':
