@@ -82,6 +82,7 @@ def train_batch(data, config, optimizer, model) -> dict:
     return {'loss': loss.detach()}
 
 
+@torch.no_grad()
 def evaluate(split: str, loader, model, config):
     print(torch.cuda.memory_allocated(device=config.device))
     stat = {'score': None, 'loss': None}
