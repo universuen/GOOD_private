@@ -15,6 +15,8 @@ class History:
     ):
         self.name = name
         self.values = []
+        results_dir = Path(__file__).absolute().parent / 'results'
+        results_dir.mkdir(exist_ok=True)
         results_dir = Path(__file__).absolute().parent / 'results' / config_name
         results_dir.mkdir(exist_ok=True)
         self.path = results_dir / f'{name}.history'
