@@ -37,7 +37,7 @@ def analyze_results_by_ratio(ratios: list[int] = None):
         results[ratio] = f'{mean}±{std}'
 
     pd.options.display.max_columns = None
-    results = pd.DataFrame.from_dict(results, index=[0])
+    results = pd.DataFrame.from_dict(results, orient='index')
     print(results)
     results.to_excel(Path(__file__).absolute() / 'results' / CONFIG_NAME / 'analyzed_results.xlsx')
 
