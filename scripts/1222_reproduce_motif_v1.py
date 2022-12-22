@@ -32,7 +32,7 @@ def analyze_results_by_ratio(ratios: list[int] = None):
                 results[ratio].append(history[int(len(history.values) * ratio) - 1] * 100)
             except (FileNotFoundError, IndexError):
                 pass
-        mean = sum(results[ratio]) / len(results[ratio])
+        mean = round(sum(results[ratio]) / len(results[ratio]), 1)
         std = round(float(np.std(results[ratio])), 1)
         results[ratio] = f'{mean}±{std}'
 
@@ -193,7 +193,7 @@ def main(seed: int):
         test_auc_history.append(test_stat['score'])
         test_auc_history.save()
 
-        analyze_results_by_ratio()
+    analyze_results_by_ratio()
 
     print('Done!')
 
