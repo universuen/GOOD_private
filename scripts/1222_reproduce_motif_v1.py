@@ -131,7 +131,6 @@ def main(seed: int):
     )
     config = config_summoner(args)
     config.random_seed = seed
-    reset_random_seed(config)
 
     # get model and data loader
     reset_random_seed(config)
@@ -193,6 +192,8 @@ def main(seed: int):
         # record
         test_auc_history.append(test_stat['score'])
         test_auc_history.save()
+        
+        analyze_results_by_ratio()
 
     print('Done!')
 
