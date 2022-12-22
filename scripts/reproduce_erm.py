@@ -11,14 +11,17 @@ from GOOD.utils.train import nan2zero_get_mask
 from GOOD.utils.evaluation import eval_data_preprocess, eval_score
 from history import History
 
-CONFIG_NAME = Path(__file__).name.split('.')[0]
-CONFIG_PATH = 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
+CONFIG_NAME_PATH_PAIRS = {
+    'erm_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
+    'erm_cmnist': 'configs/GOOD_configs/GOODCMNIST/color/covariate/ERM.yaml',
+    'erm_zinc': 'configs/GOOD_configs/GOODZINC/scaffold/covariate/ERM.yaml',
+    'erm_pcba': 'configs/GOOD_configs/GOODPCBA/scaffold/covariate/ERM.yaml',
+}
 SEEDS = list(range(10))
 
 
-def analyze_results_by_ratio(ratios: list[int] = None):
-    if ratios is None:
-        ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+def analyze_results_by_ratio(config_name):
+    ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     results = {k: [] for k in ratios}
 
     for ratio in ratios:
@@ -26,7 +29,7 @@ def analyze_results_by_ratio(ratios: list[int] = None):
             try:
                 history = History(
                     name=f'test_auc_{seed}',
-                    config_name=CONFIG_NAME,
+                    config_name=config_name,
                 )
                 history.load()
                 results[ratio].append(history[int(len(history.values) * ratio) - 1] * 100)
@@ -39,7 +42,7 @@ def analyze_results_by_ratio(ratios: list[int] = None):
     pd.options.display.max_columns = None
     results = pd.DataFrame.from_dict(results, orient='index')
     print(results)
-    results.to_excel(Path(__file__).absolute().parent / 'results' / CONFIG_NAME / 'analyzed_results.xlsx')
+    results.to_excel(Path(__file__).absolute().parent / 'results' / config_name / 'analyzed_results.xlsx')
 
 
 def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
@@ -120,10 +123,8 @@ def evaluate(split: str, loader, model, config):
     return {'score': stat['score'], 'loss': stat['loss']}
 
 
-def main(seed: int):
+def main(config_name, config_path, seed: int):
     # load config for yml
-    root_path = Path(__file__).absolute().parent.parent
-    config_path = str(root_path / CONFIG_PATH)
     args = args_parser(
         [
             '--config_path', config_path
@@ -157,7 +158,7 @@ def main(seed: int):
     # set up history
     test_auc_history = History(
         name=f'test_auc_{seed}',
-        config_name=CONFIG_NAME,
+        config_name=config_name,
     )
     # train the model
     print('Started training')
@@ -193,11 +194,15 @@ def main(seed: int):
         test_auc_history.append(test_stat['score'])
         test_auc_history.save()
 
-    analyze_results_by_ratio()
+    analyze_results_by_ratio(config_name)
 
     print('Done!')
 
 
 if __name__ == '__main__':
+
     for i in SEEDS:
-        main(i)
+        for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
+            root_path = Path(__file__).absolute().parent.parent
+            config_path = str(root_path / relative_path)
+            main(config_name, config_path, i)
