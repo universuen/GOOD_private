@@ -2,6 +2,7 @@ import context
 
 from pathlib import Path
 from multiprocessing import Process
+from threading import Thread
 
 from GOOD.kernel.main import *
 
@@ -39,7 +40,7 @@ def train_and_test(seed: int):
 
 if __name__ == '__main__':
     processes = [
-        Process(
+        Thread(
             target=train_and_test,
             args=(i,)
         )
