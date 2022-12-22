@@ -46,8 +46,6 @@ def initialize_model_dataset(config: Union[CommonArgs, Munch]) -> Tuple[torch.nn
     return model, loader
 
 
-
-
 def main():
     args = args_parser()
     config = config_summoner(args)

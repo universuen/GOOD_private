@@ -6,12 +6,7 @@ from multiprocessing import Process
 from GOOD.kernel.main import *
 
 CONFIG_PATH = 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
-NUM_TASKS = 1
-
-
-def split(list_: list, chunk_size: int):
-    for i in range(0, len(list_), chunk_size):
-        yield list_[i:i + chunk_size]
+SEEDS = list(range(10))
 
 
 def train_and_test(seed: int):
@@ -38,5 +33,5 @@ def train_and_test(seed: int):
 
 
 if __name__ == '__main__':
-    for i in range(10):
+    for i in SEEDS:
         train_and_test(i)
