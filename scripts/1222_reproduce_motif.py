@@ -7,7 +7,7 @@ from threading import Thread
 from GOOD.kernel.main import *
 
 CONFIG_PATH = 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
-NUM_TASKS = 1
+NUM_TASKS = 3
 
 
 def split(list_: list, chunk_size: int):
