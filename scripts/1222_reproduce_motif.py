@@ -6,7 +6,7 @@ from multiprocessing import Process
 from GOOD.kernel.main import *
 
 CONFIG_PATH = 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
-NUM_TASKS = 10
+NUM_TASKS = 1
 
 
 def split(list_: list, chunk_size: int):
