@@ -54,15 +54,6 @@ def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
 
 
 def train_batch(data, config, optimizer, model) -> dict:
-    r"""
-    Train a batch. (Project use only)
-
-    Args:
-        data (Batch): Current batch of data.
-
-    Returns:
-        Calculated loss.
-    """
     data = data.to(config.device)
 
     optimizer.zero_grad()
