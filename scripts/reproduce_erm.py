@@ -172,8 +172,8 @@ def main(config_name, config_path, seed: int):
 
             # train a batch
             train_batch(data, config, optimizer, model)
+            print(torch.cuda.memory_allocated(device=config.device))
 
-        torch.cuda.empty_cache()
         # evaluate
         epoch_train_stat = evaluate('eval_train', loader, model, config)
         val_stat = evaluate('val', loader, model, config)
