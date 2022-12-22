@@ -115,9 +115,6 @@ def evaluate(split: str, loader, model, config):
     # --------------- Metric calculation including ROC_AUC, Accuracy, AP.  --------------------
     stat['score'] = eval_score(pred_all, target_all, config)
 
-    print(f'#IN#\n{split.capitalize()} {config.metric.score_name}: {stat["score"]:.4f}\n'
-          f'{split.capitalize()} Loss: {stat["loss"]:.4f}')
-
     model.train()
 
     return {'score': stat['score'], 'loss': stat['loss']}

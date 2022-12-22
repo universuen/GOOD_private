@@ -15,9 +15,9 @@ class History:
     ):
         self.name = name
         self.values = []
-        results_dir = Path(__file__).absolute().parent / 'results'
+        results_dir = Path(__file__).absolute().parent / 'results' / config_name
         results_dir.mkdir(exist_ok=True)
-        self.path = results_dir / config_name / f'{name}.history'
+        self.path = results_dir / f'{name}.history'
 
     def __getitem__(self, item: int):
         return self.values[item]
