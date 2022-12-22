@@ -163,7 +163,7 @@ def main(config_name, config_path, seed: int):
         config_name=config_name,
     )
     # train the model
-    print('Started training')
+    print(seed, config_name, 'Started training')
     for epoch in range(config.train.ctn_epoch, config.train.max_epoch):
         config.train.epoch = epoch
 
@@ -180,6 +180,7 @@ def main(config_name, config_path, seed: int):
         test_stat = evaluate('test', loader, model, config)
 
         print(
+            seed,
             config_name,
             training_bar(
                 epoch,
@@ -199,7 +200,7 @@ def main(config_name, config_path, seed: int):
 
     analyze_results_by_ratio(config_name)
 
-    print('Done!')
+    print(seed, config_name, 'Done!')
 
 
 if __name__ == '__main__':
