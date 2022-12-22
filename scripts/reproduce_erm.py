@@ -82,6 +82,7 @@ def train_batch(data, config, optimizer, model) -> dict:
 
 
 def evaluate(split: str, loader, model, config):
+    torch.cuda.empty_cache()
     stat = {'score': None, 'loss': None}
     if loader.get(split) is None:
         return stat
