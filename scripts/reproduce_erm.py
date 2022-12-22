@@ -93,9 +93,10 @@ def evaluate(split: str, loader, model, config):
     mask_all = []
     pred_all = []
     target_all = []
+    print(torch.cuda.memory_allocated(device=config.device))
     for data in loader[split]:
         data = data.to(config.device)
-
+        print(torch.cuda.memory_allocated(device=config.device))
         mask, targets = nan2zero_get_mask(data, split, config)
         if mask is None:
             return stat
