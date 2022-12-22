@@ -37,7 +37,7 @@ def analyze_results_by_ratio(ratios: list[int] = None):
         results[ratio] = f'{mean}±{std}'
 
     pd.options.display.max_columns = None
-    results = pd.DataFrame.from_dict(results)
+    results = pd.DataFrame.from_dict(results, index=[0])
     print(results)
     results.to_excel(Path(__file__).absolute() / 'results' / CONFIG_NAME / 'analyzed_results.xlsx')
 
@@ -192,7 +192,7 @@ def main(seed: int):
         # record
         test_auc_history.append(test_stat['score'])
         test_auc_history.save()
-        
+
         analyze_results_by_ratio()
 
     print('Done!')
