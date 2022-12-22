@@ -2,6 +2,9 @@ import context
 
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 from GOOD.kernel.main import *
 from GOOD.utils.train import nan2zero_get_mask
 from GOOD.utils.evaluation import eval_data_preprocess, eval_score
@@ -10,6 +13,32 @@ from history import History
 CONFIG_NAME = Path(__file__).name.split('.')[0]
 CONFIG_PATH = 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
 SEEDS = list(range(10))
+
+
+def analyze_results_by_ratio(ratios: list[int] = None):
+    if ratios is None:
+        ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    results = {k: [] for k in ratios}
+
+    for ratio in ratios:
+        for seed in range(10):
+            try:
+                history = History(
+                    name=f'test_auc_{seed}',
+                    config_name=CONFIG_NAME,
+                )
+                history.load()
+                results[ratio].append(history[int(len(history.values) * ratio) - 1] * 100)
+            except (FileNotFoundError, IndexError):
+                pass
+        mean = sum(results[ratio]) / len(results[ratio])
+        std = round(float(np.std(results[ratio])), 1)
+        results[ratio] = f'{mean}±{std}'
+
+    pd.options.display.max_columns = None
+    results = pd.DataFrame.from_dict(results)
+    print(results)
+    results.to_excel(Path(__file__).absolute() / 'results' / CONFIG_NAME / 'analyzed_results.xlsx')
 
 
 def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
@@ -107,7 +136,10 @@ def main(seed: int):
     reset_random_seed(config)
 
     # get model and data loader
-    model, loader = initialize_model_dataset(config)
+    reset_random_seed(config)
+    dataset = load_dataset(config.dataset.dataset_name, config)
+    loader = create_dataloader(dataset, config)
+    model = load_model(config.model.model_name, config)
 
     # config model
     model.to(config.device)
