@@ -105,7 +105,7 @@ class GINEncoder(BasicEncoder):
 
     def __init__(self, config: Union[CommonArgs, Munch], *args, **kwargs):
 
-        super(GINEncoder, self).__init__(config, *args, **kwargs)
+        super().__init__(config, *args, **kwargs)
         num_layer = config.model.model_layer
         self.without_readout = kwargs.get('without_readout')
 

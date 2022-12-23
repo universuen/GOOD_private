@@ -60,8 +60,6 @@ def train_batch(data, config, optimizer, model) -> dict:
 
     mask, targets = nan2zero_get_mask(data, 'train', config)
 
-    data, targets, mask = data, targets, mask
-
     model_output = model(data=data)
     raw_pred = model_output
     loss = config.metric.loss_func(raw_pred, targets, reduction='none') * mask

@@ -95,7 +95,7 @@ class vGINEncoder(GINEncoder, VirtualNodeEncoder):
     """
 
     def __init__(self, config: Union[CommonArgs, Munch], **kwargs):
-        super(vGINEncoder, self).__init__(config, **kwargs)
+        super().__init__(config, **kwargs)
         self.config = config
         self.without_readout = kwargs.get('without_readout')
 
@@ -143,7 +143,7 @@ class vGINMolEncoder(GINMolEncoder, VirtualNodeEncoder):
     """
 
     def __init__(self, config: Union[CommonArgs, Munch], **kwargs):
-        super(vGINMolEncoder, self).__init__(config, **kwargs)
+        super().__init__(config, **kwargs)
         self.config: Union[CommonArgs, Munch] = config
         self.without_readout = kwargs.get('without_readout')
 
