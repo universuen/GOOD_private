@@ -195,8 +195,22 @@ def main(config_name, config_path, seed: int):
 
 if __name__ == '__main__':
 
+    from multiprocessing import Process
+
+    torch.multiprocessing.set_start_method('spawn')
+
     for i in SEEDS:
+        processes = []
         for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
             root_path = Path(__file__).absolute().parent.parent
             config_path = str(root_path / relative_path)
-            main(config_name, config_path, i)
+            processes.append(
+                Process(
+                    target=main,
+                    args=(config_name, config_path, i)
+                )
+            )
+        for i in processes:
+            i.start()
+        for i in processes:
+            i.join()
