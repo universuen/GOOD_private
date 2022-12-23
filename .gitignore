@@ -12,3 +12,5 @@ __pycache__/
 /GOOD/kernel/auto_curve.py
 /GOOD/kernel/auto_curve_chart.py
 /configs/auto_config_finetune/
+scripts/results/
+scripts/models/
