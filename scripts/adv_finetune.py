@@ -391,7 +391,7 @@ def main(config_name, config_path, seed: int):
 if __name__ == '__main__':
 
     from multiprocessing import Process
-
+    torch.multiprocessing.set_start_method('spawn')
     for i in SEEDS:
         for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
             root_path = Path(__file__).absolute().parent.parent
