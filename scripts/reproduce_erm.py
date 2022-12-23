@@ -15,7 +15,7 @@ from history import History
 CONFIG_NAME_PATH_PAIRS = {
     'erm_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
     'erm_cmnist': 'configs/GOOD_configs/GOODCMNIST/color/covariate/ERM.yaml',
-    'erm_zinc': 'configs/GOOD_configs/GOODZINC/scaffold/covariate/ERM.yaml',
+    'erm_sst2': 'configs/GOOD_configs/GOODSST2/length/covariate/ERM.yaml',
     'erm_pcba': 'configs/GOOD_configs/GOODPCBA/scaffold/covariate/ERM.yaml',
 }
 SEEDS = list(range(10))
