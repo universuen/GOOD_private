@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import GOOD.networks.models.GINs
 import context
 
 from pathlib import Path
@@ -392,6 +391,7 @@ def main(config_name, config_path, seed: int):
 if __name__ == '__main__':
 
     from multiprocessing import Process
+
     for i in SEEDS:
         for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
             root_path = Path(__file__).absolute().parent.parent
