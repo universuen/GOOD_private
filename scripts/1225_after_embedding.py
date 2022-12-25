@@ -409,8 +409,8 @@ def main(config_name, config_path, seed: int):
     logging_print(seed, config_name, 'Done!', flush=True)
     return {
         'epoch': epoch_at_best_val,
-        'val': round(best_val_auc, 1),
-        'test': round(test_auc_at_best_val, 1),
+        'val': round(best_val_auc * 100, 1),
+        'test': round(test_auc_at_best_val * 100, 1),
     }
 
 
