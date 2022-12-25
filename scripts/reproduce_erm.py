@@ -23,31 +23,6 @@ CONFIG_NAME_PATH_PAIRS = {
 }
 
 
-def analyze_results_by_ratio(config_name):
-    ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    results = {k: [] for k in ratios}
-
-    for ratio in ratios:
-        for seed in range(10):
-            try:
-                history = History(
-                    name=f'test_auc_{seed}',
-                    config_name=config_name,
-                )
-                history.load()
-                results[ratio].append(history[int(len(history.values) * ratio) - 1] * 100)
-            except (FileNotFoundError, IndexError):
-                pass
-        mean = round(sum(results[ratio]) / len(results[ratio]), 1)
-        std = round(float(np.std(results[ratio])), 1)
-        results[ratio] = f'{mean}±{std}'
-
-    pd.options.display.max_columns = None
-    results = pd.DataFrame.from_dict(results, orient='index')
-    print(results)
-    results.to_excel(Path(__file__).absolute().parent / 'results' / config_name / 'analyzed_results.xlsx')
-
-
 def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
     content = f'epoch {epoch + 1} / {total_epochs}:'
     for k, v in kwargs.items():
@@ -117,9 +92,6 @@ def evaluate(split: str, loader, model, config):
 
 
 def main(config_name, config_path, seed: int):
-    PromptedGINEncoder.enable()
-    PromptedVNGINEncoder.enable()
-    PromptedVNMolGINEncoder.enable()
     # load config for yml
     args = args_parser(
         [
