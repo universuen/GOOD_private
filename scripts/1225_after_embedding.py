@@ -1,19 +1,25 @@
 from __future__ import annotations
+
 import context
 
 from pathlib import Path
 
 import torch
+from torch import nn
 import numpy as np
 import pandas as pd
+import torch_geometric.nn as gnn
 
 from GOOD.kernel.main import *
 from GOOD.utils.train import nan2zero_get_mask
 from GOOD.utils.evaluation import eval_data_preprocess, eval_score
+from GOOD.networks.models import GINs, GINvirtualnode
 from history import History
 
 FILE_NAME = Path(__file__).name.split('.')[0]
 SEEDS = list(range(10))
+ADV_STEP_SIZE = 8e-3
+ADV_NUM_ITER = 4
 
 CONFIG_NAME_PATH_PAIRS = {
     f'{FILE_NAME}_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
@@ -23,29 +29,153 @@ CONFIG_NAME_PATH_PAIRS = {
 }
 
 
-def analyze_results_by_ratio(config_name):
-    ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    results = {k: [] for k in ratios}
+class Prompt(nn.Module):
+    def __init__(
+            self,
+            batch_size: int,
+            length: int,
+            uniform_init_interval: tuple[float, float] = (
+                    -ADV_STEP_SIZE, ADV_STEP_SIZE
+            ),
+    ):
+        super().__init__()
 
-    for ratio in ratios:
-        for seed in range(10):
-            try:
-                history = History(
-                    name=f'test_auc_{seed}',
-                    config_name=config_name,
+        self.uniform_init_interval = uniform_init_interval
+        self.b = torch.nn.Parameter(
+            torch.zeros(
+                batch_size,
+                length,
+            )
+        )
+        nn.init.uniform_(self.b, *self.uniform_init_interval)
+
+    def forward(self, x: torch.Tensor, batch: torch.Tensor):
+        return x + self.b[batch]
+
+
+class PromptedGINEncoder(GINs.GINEncoder):
+    def __init__(self, config: Union[CommonArgs, Munch], *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
+        self.prompts = None
+        self.embedding = nn.Linear(config.dataset.dim_node, config.model.dim_hidden, bias=False)
+        self.conv1 = gnn.GINConv(nn.Sequential(nn.Linear(config.model.dim_hidden, 2 * config.model.dim_hidden),
+                                               nn.BatchNorm1d(2 * config.model.dim_hidden), nn.ReLU(),
+                                               nn.Linear(2 * config.model.dim_hidden, config.model.dim_hidden)))
+
+    def forward(self, x, edge_index, batch, batch_size, **kwargs):
+
+        if self.prompts is None:
+            return super().forward(x, edge_index, batch, batch_size, **kwargs)
+
+        x = self.embedding(x)
+        x = self.prompts[0](x, batch)
+        post_conv = self.dropout1(self.relu1(self.batch_norm1(self.conv1(x, edge_index))))
+        for i, (conv, batch_norm, relu, dropout) in enumerate(
+                zip(self.convs, self.batch_norms, self.relus, self.dropouts)
+        ):
+            post_conv = self.prompts[i + 1](post_conv, batch)
+            post_conv = batch_norm(conv(post_conv, edge_index))
+            if i != len(self.convs) - 1:
+                post_conv = relu(post_conv)
+            post_conv = dropout(post_conv)
+
+        if self.without_readout or kwargs.get('without_readout'):
+            return post_conv
+        out_readout = self.readout(post_conv, batch, batch_size)
+        return out_readout
+
+    @classmethod
+    def enable(cls):
+        GINs.GINEncoder = cls
+
+
+class PromptedVNGINEncoder(GINvirtualnode.vGINEncoder):
+    def __init__(self, config: Union[CommonArgs, Munch], **kwargs):
+        super().__init__(config, **kwargs)
+        self.prompts = None
+        self.embedding = nn.Linear(config.dataset.dim_node, config.model.dim_hidden, bias=False)
+        self.conv1 = gnn.GINConv(nn.Sequential(nn.Linear(config.model.dim_hidden, 2 * config.model.dim_hidden),
+                                               nn.BatchNorm1d(2 * config.model.dim_hidden), nn.ReLU(),
+                                               nn.Linear(2 * config.model.dim_hidden, config.model.dim_hidden)))
+
+    def forward(self, x, edge_index, batch, batch_size, **kwargs):
+
+        if self.prompts is None:
+            return super().forward(x, edge_index, batch, batch_size, **kwargs)
+
+        virtual_node_feat = self.virtual_node_embedding(
+            torch.zeros(batch_size, device=self.config.device, dtype=torch.long))
+
+        x = self.embedding(x)
+        x = self.prompts[0](x, batch)
+        post_conv = self.dropout1(self.relu1(self.batch_norm1(self.conv1(x, edge_index))))
+        for i, (conv, batch_norm, relu, dropout) in enumerate(
+                zip(self.convs, self.batch_norms, self.relus, self.dropouts)
+        ):
+            post_conv = self.prompts[i + 1](post_conv, batch)
+            # --- Add global info ---
+            post_conv = post_conv + virtual_node_feat[batch]
+            post_conv = batch_norm(conv(post_conv, edge_index))
+            if i < len(self.convs) - 1:
+                post_conv = relu(post_conv)
+            post_conv = dropout(post_conv)
+            # --- update global info ---
+            if i < len(self.convs) - 1:
+                virtual_node_feat = self.virtual_mlp(
+                    self.virtual_pool(post_conv, batch, batch_size) + virtual_node_feat
                 )
-                history.load()
-                results[ratio].append(history[int(len(history.values) * ratio) - 1] * 100)
-            except (FileNotFoundError, IndexError):
-                pass
-        mean = round(sum(results[ratio]) / len(results[ratio]), 1)
-        std = round(float(np.std(results[ratio])), 1)
-        results[ratio] = f'{mean}±{std}'
 
-    pd.options.display.max_columns = None
-    results = pd.DataFrame.from_dict(results, orient='index')
-    print(results)
-    results.to_excel(Path(__file__).absolute().parent / 'results' / config_name / 'analyzed_results.xlsx')
+        if self.without_readout or kwargs.get('without_readout'):
+            return post_conv
+        out_readout = self.readout(post_conv, batch, batch_size)
+        return out_readout
+
+    @classmethod
+    def enable(cls):
+        GINvirtualnode.vGINEncoder = cls
+
+
+class PromptedVNMolGINEncoder(GINvirtualnode.vGINMolEncoder):
+    def __init__(self, config: Union[CommonArgs, Munch], **kwargs):
+        super().__init__(config, **kwargs)
+        self.prompts = None
+
+    def forward(self, x, edge_index, edge_attr, batch, batch_size, **kwargs):
+
+        if self.prompts is None:
+            return super().forward(x, edge_index, edge_attr, batch, batch_size, **kwargs)
+
+        virtual_node_feat = self.virtual_node_embedding(
+            torch.zeros(batch_size, device=self.config.device, dtype=torch.long)
+        )
+
+        x = self.atom_encoder(x)
+        x = self.prompts[0](x, batch)
+        post_conv = self.dropout1(self.relu1(self.batch_norm1(self.conv1(x, edge_index, edge_attr))))
+        for i, (conv, batch_norm, relu, dropout) in enumerate(
+                zip(self.convs, self.batch_norms, self.relus, self.dropouts)
+        ):
+            post_conv = self.prompts[i + 1](post_conv, batch)
+            # --- Add global info ---
+            post_conv = post_conv + virtual_node_feat[batch]
+            post_conv = batch_norm(conv(post_conv, edge_index, edge_attr))
+            if i < len(self.convs) - 1:
+                post_conv = relu(post_conv)
+            post_conv = dropout(post_conv)
+            # --- update global info ---
+            if i < len(self.convs) - 1:
+                virtual_node_feat = self.virtual_mlp(
+                    self.virtual_pool(post_conv, batch, batch_size) + virtual_node_feat
+                )
+
+        if self.without_readout or kwargs.get('without_readout'):
+            return post_conv
+        out_readout = self.readout(post_conv, batch, batch_size)
+        return out_readout
+
+    @classmethod
+    def enable(cls):
+        GINvirtualnode.vGINMolEncoder = cls
 
 
 def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
@@ -58,17 +188,53 @@ def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
 def train_batch(data, config, optimizer, model) -> dict:
     data = data.to(config.device)
 
+    # add prompts
+    prompts = nn.ModuleList(
+        [
+            Prompt(
+                batch_size=config.train.train_bs,
+                length=config.model.dim_hidden,
+            ).to(config.device)
+            for _ in range(config.model.model_layer)
+        ]
+    )
+    assert hasattr(model.feat_encoder.encoder, 'prompts')
+    model.feat_encoder.encoder.prompts = prompts
+
     optimizer.zero_grad()
 
+    # calculate loss
     mask, targets = nan2zero_get_mask(data, 'train', config)
-
     model_output = model(data=data)
     raw_pred = model_output
     loss = config.metric.loss_func(raw_pred, targets, reduction='none') * mask
     loss = loss.sum() / mask.sum()
+    loss /= ADV_NUM_ITER
 
+    # maximize loss by updating prompts
+    for _ in range(ADV_NUM_ITER - 1):
+        # calculate gradients
+        loss.backward()
+        # update prompts parameters based on gradients sign
+        for i in prompts.parameters():
+            assert i.grad is not None
+            i_data = i.detach() + ADV_STEP_SIZE * torch.sign(i.grad.detach())
+            i.data = i_data.data
+            i.grad[:] = 0
+        # calculate loss
+        mask, targets = nan2zero_get_mask(data, 'train', config)
+        model_output = model(data=data)
+        raw_pred = model_output
+        loss = config.metric.loss_func(raw_pred, targets, reduction='none') * mask
+        loss = loss.sum() / mask.sum()
+        loss /= ADV_NUM_ITER
+
+    # minimize loss by updating others
     loss.backward()
     optimizer.step()
+
+    # remove prompts
+    model.feat_encoder.encoder.prompts = None
 
     return {'loss': loss.detach()}
 
