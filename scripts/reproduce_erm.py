@@ -197,6 +197,7 @@ def main(config_name, config_path, seed: int):
 
         # save model
         if best_val_auc is None or val_auc_history.last_one > best_val_auc:
+            epoch_at_best_val = epoch + 1
             best_val_auc = val_auc_history.last_one
             test_auc_at_best_val = test_auc_history.last_one
             models_dir = Path(__file__).absolute().parent / 'models'
