@@ -14,3 +14,4 @@ __pycache__/
 /configs/auto_config_finetune/
 scripts/results/
 scripts/models/
+scripts/logs/
