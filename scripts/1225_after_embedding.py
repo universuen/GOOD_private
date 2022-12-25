@@ -63,11 +63,10 @@ class PromptedGINEncoder(GINs.GINEncoder):
                                                nn.Linear(2 * config.model.dim_hidden, config.model.dim_hidden)))
 
     def forward(self, x, edge_index, batch, batch_size, **kwargs):
-
+        x = self.embedding(x)
         if self.prompts is None:
             return super().forward(x, edge_index, batch, batch_size, **kwargs)
 
-        x = self.embedding(x)
         x = self.prompts[0](x, batch)
         post_conv = self.dropout1(self.relu1(self.batch_norm1(self.conv1(x, edge_index))))
         for i, (conv, batch_norm, relu, dropout) in enumerate(
@@ -99,14 +98,13 @@ class PromptedVNGINEncoder(GINvirtualnode.vGINEncoder):
                                                nn.Linear(2 * config.model.dim_hidden, config.model.dim_hidden)))
 
     def forward(self, x, edge_index, batch, batch_size, **kwargs):
-
+        x = self.embedding(x)
         if self.prompts is None:
             return super().forward(x, edge_index, batch, batch_size, **kwargs)
 
         virtual_node_feat = self.virtual_node_embedding(
             torch.zeros(batch_size, device=self.config.device, dtype=torch.long))
 
-        x = self.embedding(x)
         x = self.prompts[0](x, batch)
         post_conv = self.dropout1(self.relu1(self.batch_norm1(self.conv1(x, edge_index))))
         for i, (conv, batch_norm, relu, dropout) in enumerate(
@@ -378,7 +376,7 @@ def main(config_name, config_path, seed: int):
 
         # save model
         if best_val_auc is None or val_auc_history.last_one > best_val_auc:
-            max_val_auc = val_auc_history.last_one
+            best_val_auc = val_auc_history.last_one
             test_auc_at_best_val = test_auc_history.last_one
             models_dir = Path(__file__).absolute().parent / 'models'
             models_dir.mkdir(exist_ok=True)
@@ -389,8 +387,10 @@ def main(config_name, config_path, seed: int):
                 model.state_dict(),
                 path,
             )
-            print(f"Saved a new model at {path}")
-            print(f'epoch: {epoch + 1} | val_auc: {max_val_auc} | test_auc: {test_auc_at_best_val}')
+            print()
+            print(seed, config_name, "New model saved:")
+            print(f'***** epoch: {epoch + 1} | val_auc: {best_val_auc} | test_auc: {test_auc_at_best_val} *****')
+            print()
 
     print(seed, config_name, 'Done!', flush=True)
     return {

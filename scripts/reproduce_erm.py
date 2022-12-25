@@ -184,7 +184,7 @@ def main(config_name, config_path, seed: int):
 
         # save model
         if best_val_auc is None or val_auc_history.last_one > best_val_auc:
-            max_val_auc = val_auc_history.last_one
+            best_val_auc = val_auc_history.last_one
             test_auc_at_best_val = test_auc_history.last_one
             models_dir = Path(__file__).absolute().parent / 'models'
             models_dir.mkdir(exist_ok=True)
@@ -195,8 +195,10 @@ def main(config_name, config_path, seed: int):
                 model.state_dict(),
                 path,
             )
-            print(f"Saved a new model at {path}")
-            print(f'epoch: {epoch + 1} | val_auc: {max_val_auc} | test_auc: {test_auc_at_best_val}')
+            print()
+            print(seed, config_name, "New model saved:")
+            print(f'***** epoch: {epoch + 1} | val_auc: {best_val_auc} | test_auc: {test_auc_at_best_val} *****')
+            print()
 
     print(seed, config_name, 'Done!', flush=True)
     return {
