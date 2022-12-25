@@ -1,0 +1,12 @@
+0 reproduce_erm_motif Started training
+0 reproduce_erm_motif epoch 1 / 200: [training_loss:0.46329] [training_auc:0.86272] [validating_auc:0.50200] [test_auc:0.46100]
+
+0 reproduce_erm_motif New model saved:
+***** epoch: 1 | val_auc: 0.502 | test_auc: 0.461 *****
+
+0 reproduce_erm_motif epoch 2 / 200: [training_loss:0.45019] [training_auc:0.88283] [validating_auc:0.61467] [test_auc:0.37500]
+
+0 reproduce_erm_motif New model saved:
+***** epoch: 2 | val_auc: 0.6146666666666667 | test_auc: 0.375 *****
+
+0 reproduce_erm_motif epoch 3 / 200: [training_loss:0.42489] [training_auc:0.90661] [validating_auc:0.55500] [test_auc:0.42200]

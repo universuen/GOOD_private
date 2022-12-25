@@ -22,6 +22,19 @@ CONFIG_NAME_PATH_PAIRS = {
     f'{FILE_NAME}_pcba': 'configs/GOOD_configs/GOODPCBA/scaffold/covariate/ERM.yaml',
 }
 
+CONFIG_NAME = None
+
+
+def logging_print(*args, **kwargs):
+    global CONFIG_NAME
+    assert CONFIG_NAME is not None
+    logs_dir = Path(__file__).absolute().parent / 'logs'
+    logs_dir.mkdir(exist_ok=True)
+    with open(logs_dir / f'{CONFIG_NAME}.log', 'a') as f:
+        args = [str(i) for i in args]
+        f.write(f"{' '.join(args)}\n")
+    print(*args, **kwargs)
+
 
 def training_bar(epoch: int, total_epochs: int, **kwargs) -> str:
     content = f'epoch {epoch + 1} / {total_epochs}:'
@@ -141,7 +154,7 @@ def main(config_name, config_path, seed: int):
     test_auc_at_best_val = None
     epoch_at_best_val = None
     # train the model
-    print(seed, config_name, 'Started training', flush=True)
+    logging_print(seed, config_name, 'Started training', flush=True)
     for epoch in range(config.train.ctn_epoch, config.train.max_epoch):
         config.train.epoch = epoch
 
@@ -157,7 +170,7 @@ def main(config_name, config_path, seed: int):
         val_stat = evaluate('val', loader, model, config)
         test_stat = evaluate('test', loader, model, config)
 
-        print(
+        logging_print(
             seed,
             config_name,
             training_bar(
@@ -195,12 +208,12 @@ def main(config_name, config_path, seed: int):
                 model.state_dict(),
                 path,
             )
-            print()
-            print(seed, config_name, "New model saved:")
-            print(f'***** epoch: {epoch + 1} | val_auc: {best_val_auc} | test_auc: {test_auc_at_best_val} *****')
-            print()
+            logging_print()
+            logging_print(seed, config_name, "New model saved:")
+            logging_print(f'***** epoch: {epoch + 1} | val_auc: {best_val_auc} | test_auc: {test_auc_at_best_val} *****')
+            logging_print()
 
-    print(seed, config_name, 'Done!', flush=True)
+    logging_print(seed, config_name, 'Done!', flush=True)
     return {
         'epoch': epoch_at_best_val,
         'val': round(best_val_auc, 1),
@@ -209,6 +222,8 @@ def main(config_name, config_path, seed: int):
 
 
 def test_all_seeds(config_name, relative_path):
+    global CONFIG_NAME
+    CONFIG_NAME = config_name
     results = dict()
     for i in SEEDS:
         root_path = Path(__file__).absolute().parent.parent
@@ -237,7 +252,7 @@ def test_all_seeds(config_name, relative_path):
             ],
         )
         results_df.columns.name = 'seed'
-        print(results_df)
+        logging_print(results_df)
         results_dir = Path(__file__).absolute().parent / 'results'
         results_dir.mkdir(exist_ok=True)
         results_dir = Path(__file__).absolute().parent / 'results' / config_name
