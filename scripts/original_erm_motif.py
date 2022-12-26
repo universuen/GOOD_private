@@ -5,7 +5,7 @@ from GOOD.kernel.main import *
 if __name__ == '__main__':
     args = args_parser(
         [
-            '--config_path', 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
+            '--config_path', 'GOOD_configs/GOODMotif/basis/covariate/ERM.yaml'
         ]
     )
     config = config_summoner(args)
