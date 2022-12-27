@@ -306,6 +306,9 @@ def main(config_name, config_path, seed: int):
     config = config_summoner(args)
     config.random_seed = seed
 
+    if 'pcba' in config_name:
+        config.train.train_bs = 512
+
     # get model and data loader
     reset_random_seed(config)
     dataset = load_dataset(config.dataset.dataset_name, config)
@@ -417,6 +420,7 @@ def main(config_name, config_path, seed: int):
 def test_all_seeds(config_name, relative_path):
     global CONFIG_NAME
     CONFIG_NAME = config_name
+
     results = dict()
     for i in SEEDS:
         root_path = Path(__file__).absolute().parent.parent
