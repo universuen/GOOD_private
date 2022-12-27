@@ -22,9 +22,9 @@ ADV_STEP_SIZE = 8e-3
 ADV_NUM_ITER = 4
 
 CONFIG_NAME_PATH_PAIRS = {
-    f'{FILE_NAME}_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
-    f'{FILE_NAME}_cmnist': 'configs/GOOD_configs/GOODCMNIST/color/covariate/ERM.yaml',
-    f'{FILE_NAME}_sst2': 'configs/GOOD_configs/GOODSST2/length/covariate/ERM.yaml',
+    # f'{FILE_NAME}_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
+    # f'{FILE_NAME}_cmnist': 'configs/GOOD_configs/GOODCMNIST/color/covariate/ERM.yaml',
+    # f'{FILE_NAME}_sst2': 'configs/GOOD_configs/GOODSST2/length/covariate/ERM.yaml',
     f'{FILE_NAME}_pcba': 'configs/GOOD_configs/GOODPCBA/scaffold/covariate/ERM.yaml',
 }
 
@@ -305,7 +305,7 @@ def main(config_name, config_path, seed: int):
     )
     config = config_summoner(args)
     config.random_seed = seed
-
+    config.train.train_bs = 512
     # get model and data loader
     reset_random_seed(config)
     dataset = load_dataset(config.dataset.dataset_name, config)
