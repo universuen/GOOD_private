@@ -19,7 +19,7 @@ from history import History
 FILE_NAME = Path(__file__).name.split('.')[0]
 SEEDS = list(range(10))
 ADV_STEP_SIZE = 8e-3
-ADV_NUM_ITER = 4
+ADV_NUM_ITER = 1
 
 CONFIG_NAME_PATH_PAIRS = {
     # f'{FILE_NAME}_motif': 'configs/GOOD_configs/GOODMotif/basis/covariate/ERM.yaml',
