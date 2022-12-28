@@ -305,7 +305,6 @@ def main(config_name, config_path, seed: int):
     )
     config = config_summoner(args)
     config.random_seed = seed
-    config.train.train_bs = 512
     # get model and data loader
     reset_random_seed(config)
     dataset = load_dataset(config.dataset.dataset_name, config)
