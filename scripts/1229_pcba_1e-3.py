@@ -460,7 +460,7 @@ if __name__ == '__main__':
 
     from multiprocessing import Process
 
-    torch.multiprocessing.set_start_method('spawn')
+    torch.multiprocessing.set_start_method('fork')
 
     for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
         Process(
