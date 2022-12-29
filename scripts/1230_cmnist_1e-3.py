@@ -405,7 +405,8 @@ def main(config_name, config_path, seed: int):
             )
             logging_print()
             logging_print(seed, config_name, "New model saved:")
-            logging_print(f'***** epoch: {epoch + 1} | val_auc: {best_val_auc} | test_auc: {test_auc_at_best_val} *****')
+            logging_print(
+                f'***** epoch: {epoch + 1} | val_auc: {best_val_auc} | test_auc: {test_auc_at_best_val} *****')
             logging_print()
 
     logging_print(seed, config_name, 'Done!', flush=True)
@@ -457,10 +458,6 @@ def test_all_seeds(config_name, relative_path):
 
 
 if __name__ == '__main__':
-
-    from multiprocessing import Process
-
-    torch.multiprocessing.set_start_method('spawn')
 
     for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
         test_all_seeds(config_name, relative_path)
