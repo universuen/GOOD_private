@@ -48,7 +48,7 @@ class BaseDataLoader(Munch):
                 loader = {'train': loader, 'eval_train': [graph], 'id_val': [graph], 'id_test': [graph], 'val': [graph],
                           'test': [graph]}
         else:
-            loader = {'train': DataLoader(dataset['train'], batch_size=config.train.train_bs, shuffle=True),
+            loader = {'train': DataLoader(dataset['train'], batch_size=config.train.train_bs, shuffle=True, num_workers=4),
                       'eval_train': DataLoader(dataset['train'], batch_size=config.train.val_bs, shuffle=False),
                       'id_val': DataLoader(dataset['id_val'], batch_size=config.train.val_bs, shuffle=False) if dataset.get(
                           'id_val') else None,
