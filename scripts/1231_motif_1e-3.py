@@ -458,12 +458,5 @@ def test_all_seeds(config_name, relative_path):
 
 if __name__ == '__main__':
 
-    from multiprocessing import Process
-
-    torch.multiprocessing.set_start_method('spawn')
-
     for config_name, relative_path in CONFIG_NAME_PATH_PAIRS.items():
-        Process(
-            target=test_all_seeds,
-            args=(config_name, relative_path),
-        ).start()
+        test_all_seeds(config_name, relative_path)
