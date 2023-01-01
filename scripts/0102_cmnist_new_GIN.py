@@ -110,7 +110,8 @@ class GNNSynEncoder(GINs.GINEncoder):
 
     def forward(self, x, edge_index, batch, batch_size, **kwargs):
         post_conv = self.batch_norm1(self.conv1(x, edge_index))
-        post_conv = self.prompts[0](post_conv, batch)
+        if self.prompts is not None:
+            post_conv = self.prompts[0](post_conv, batch)
         if self.num_layer > 1:
             post_conv = self.relu1(post_conv)
             post_conv = self.dropout1(post_conv)
@@ -118,7 +119,8 @@ class GNNSynEncoder(GINs.GINEncoder):
         for i, (conv, batch_norm, relu, dropout) in enumerate(
                 zip(self.convs, self.batch_norms, self.relus, self.dropouts)
         ):
-            post_conv = self.prompts[i + 1](post_conv, batch)
+            if self.prompts is not None:
+                post_conv = self.prompts[i + 1](post_conv, batch)
             post_conv = batch_norm(conv(post_conv, edge_index))
             if i != len(self.convs) - 1:
                 post_conv = relu(post_conv)
