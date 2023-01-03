@@ -22,7 +22,7 @@ SEEDS = list(range(10))
 ADV_STEP_SIZE = 1e-5
 ADV_NUM_ITER = 3
 BATCH_SIZE = 128
-ALPHA = 0.5
+ALPHA = 0.1
 
 CONFIG_NAME_PATH_PAIRS = {
     f'{FILE_NAME}_cmnist': 'configs/GOOD_configs/GOODCMNIST/color/covariate/ERM.yaml',
