@@ -19,7 +19,7 @@ from history import History
 
 FILE_NAME = Path(__file__).name.split('.')[0]
 SEEDS = list(range(10))
-ADV_STEP_SIZE = 1e-4
+ADV_STEP_SIZE = 1e-5
 ADV_NUM_ITER = 3
 BATCH_SIZE = 128
 ALPHA = 0.5
