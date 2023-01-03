@@ -122,7 +122,7 @@ class GNNSynEncoder(GINs.GINEncoder):
                 zip(self.convs, self.batch_norms, self.relus, self.dropouts)
         ):
             if self.prompts is not None:
-                prompted_x = self.prompts[0](post_conv, batch)
+                prompted_x = self.prompts[i + 1](post_conv, batch)
                 post_conv = (1 - ALPHA) * post_conv + ALPHA * prompted_x
             post_conv = batch_norm(conv(post_conv, edge_index))
             if i != len(self.convs) - 1:
