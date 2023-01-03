@@ -113,7 +113,7 @@ class GNNSynEncoder(GINs.GINEncoder):
         post_conv = self.batch_norm1(self.conv1(x, edge_index))
         if self.prompts is not None:
             prompted_x = self.prompts[0](post_conv, batch)
-            post_conv = (1 - ALPHA) * post_conv + ALPHA * prompted_x
+            post_conv = prompted_x
         if self.num_layer > 1:
             post_conv = self.relu1(post_conv)
             post_conv = self.dropout1(post_conv)
@@ -122,8 +122,11 @@ class GNNSynEncoder(GINs.GINEncoder):
                 zip(self.convs, self.batch_norms, self.relus, self.dropouts)
         ):
             if self.prompts is not None:
-                prompted_x = self.prompts[i + 1](post_conv, batch)
-                post_conv = (1 - ALPHA) * post_conv + ALPHA * prompted_x
+                prompted_x = self.prompts[i + 1](
+                    (1 - ALPHA) * post_conv + ALPHA * prompted_x,
+                    batch,
+                )
+                post_conv = prompted_x
             post_conv = batch_norm(conv(post_conv, edge_index))
             if i != len(self.convs) - 1:
                 post_conv = relu(post_conv)
