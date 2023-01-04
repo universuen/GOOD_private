@@ -56,6 +56,7 @@ class Prompt(nn.Module):
 
     def forward(self, x: torch.Tensor, batch: torch.Tensor):
         if self.b is None:
+            print(1)
             self.b = torch.nn.Parameter(
                 torch.zeros(
                     max(batch) + 1,
@@ -190,6 +191,7 @@ def train_batch(data, config, optimizer, model) -> dict:
 
     # remove prompts
     model.feat_encoder.encoder.prompts = None
+    print(loss)
     return {'loss': loss.detach()}
 
 
@@ -237,7 +239,7 @@ def evaluate(split: str, loader, model, config):
 
 
 def main(config_name, config_path, seed: int):
-    PromptedVNGINEncoder.enable()
+    GNNSynEncoder.enable()
     # load config for yml
     args = args_parser(
         [
@@ -247,6 +249,7 @@ def main(config_name, config_path, seed: int):
     config = config_summoner(args)
     config.random_seed = seed
     config.train.train_bs = BATCH_SIZE
+    config.train.epoch = 100
 
     # get model and data loader
     reset_random_seed(config)
