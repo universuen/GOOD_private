@@ -45,6 +45,8 @@ def logging_print(*args, **kwargs):
 class Prompt(nn.Module):
     def __init__(
             self,
+            batch_size: int,
+            length: int,
             uniform_init_interval: tuple[float, float] = (
                     -ADV_STEP_SIZE, ADV_STEP_SIZE
             ),
@@ -52,17 +54,15 @@ class Prompt(nn.Module):
         super().__init__()
 
         self.uniform_init_interval = uniform_init_interval
-        self.b = None
+        self.b = torch.nn.Parameter(
+            torch.zeros(
+                batch_size,
+                length,
+            )
+        )
+        nn.init.uniform_(self.b, *self.uniform_init_interval)
 
     def forward(self, x: torch.Tensor, batch: torch.Tensor):
-        if self.b is None:
-            self.b = torch.nn.Parameter(
-                torch.zeros(
-                    max(batch) + 1,
-                    x.shape[1],
-                )
-            ).to(x.device)
-            nn.init.uniform_(self.b, *self.uniform_init_interval)
         return F.relu(x + self.b[batch])
 
 
@@ -82,9 +82,9 @@ class GINConv(MessagePassing):
 
     def message(self, x_j, edge_weight=None):
         if edge_weight is not None:
-            mess = F.relu(x_j * edge_weight)
+            mess = x_j * edge_weight
         else:
-            mess = F.relu(x_j)
+            mess = x_j
         return mess
 
     def update(self, aggr_out):
@@ -147,10 +147,14 @@ def train_batch(data, config, optimizer, model) -> dict:
     data = data.to(config.device)
 
     # add prompts
+    lengths = [data.x.shape[1]] + [300 for _ in range(config.model.model_layer - 1)]
     prompts = nn.ModuleList(
         [
-            Prompt()
-            for _ in range(config.model.model_layer)
+            Prompt(
+                batch_size=config.train.train_bs,
+                length=length,
+            ).to(config.device)
+            for length in lengths
         ]
     )
     assert hasattr(model.feat_encoder.encoder, 'prompts')
