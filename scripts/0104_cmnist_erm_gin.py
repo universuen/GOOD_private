@@ -82,9 +82,9 @@ class GINConv(MessagePassing):
 
     def message(self, x_j, edge_weight=None):
         if edge_weight is not None:
-            mess = x_j * edge_weight
+            mess = F.relu(x_j * edge_weight)
         else:
-            mess = x_j
+            mess = F.relu(x_j)
         return mess
 
     def update(self, aggr_out):
