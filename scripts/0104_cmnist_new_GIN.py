@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from torch_geometric.nn import MessagePassing
 import torch.nn.functional as F
+import torch_geometric.nn as gnn
 
 from GOOD.kernel.main import *
 from GOOD.utils.train import nan2zero_get_mask
@@ -65,66 +66,41 @@ class Prompt(nn.Module):
         return F.relu(x + self.b[batch])
 
 
-class GINConv(MessagePassing):
-    def __init__(self, in_dim, emb_dim):
-
-        super(GINConv, self).__init__(aggr="add")
-        self.mlp = torch.nn.Sequential(torch.nn.Linear(in_dim, 2 * emb_dim),
-                                       torch.nn.BatchNorm1d(2 * emb_dim),
-                                       torch.nn.ReLU(),
-                                       torch.nn.Linear(2 * emb_dim, emb_dim))
-        self.eps = torch.nn.Parameter(torch.Tensor([0]))
-
-    def forward(self, x, edge_index, edge_weight=None):
-        out = self.mlp((1 + self.eps) * x + self.propagate(edge_index, x=x, edge_weight=edge_weight))
-        return out
-
-    def message(self, x_j, edge_weight=None):
-        if edge_weight is not None:
-            mess = x_j * edge_weight
-        else:
-            mess = x_j
-        return mess
-
-    def update(self, aggr_out):
-        return aggr_out
-
-
-class GNNSynEncoder(GINs.GINEncoder):
-    def __init__(self, config: Union[CommonArgs, Munch], *args, **kwargs):
-
-        super().__init__(config, *args, **kwargs)
-        self.num_layer = config.model.model_layer
-        self.in_dim = config.dataset.dim_node
-        self.emb_dim = config.model.dim_hidden
-        self.dropout_rate = config.model.dropout_rate
-        self.relu1 = nn.ReLU()
-        self.relus = nn.ModuleList([nn.ReLU() for _ in range(self.num_layer - 1)])
-        self.batch_norm1 = nn.BatchNorm1d(self.emb_dim)
-        self.batch_norms = nn.ModuleList([nn.BatchNorm1d(self.emb_dim) for _ in range(self.num_layer - 1)])
-        self.dropout1 = nn.Dropout(self.dropout_rate)
-        self.dropouts = nn.ModuleList([nn.Dropout(self.dropout_rate) for _ in range(self.num_layer - 1)])
-        self.conv1 = GINConv(self.in_dim, self.emb_dim)
-        self.convs = nn.ModuleList([GINConv(self.emb_dim, self.emb_dim) for _ in range(self.num_layer - 1)])
+class PromptedVNGINEncoder(GINvirtualnode.vGINEncoder):
+    def __init__(self, config: Union[CommonArgs, Munch], **kwargs):
+        super().__init__(config, **kwargs)
         self.prompts = None
+        self.embedding = nn.Linear(config.dataset.dim_node, config.model.dim_hidden, bias=False)
+        self.conv1 = gnn.GINConv(nn.Sequential(nn.Linear(config.model.dim_hidden, 2 * config.model.dim_hidden),
+                                               nn.BatchNorm1d(2 * config.model.dim_hidden), nn.ReLU(),
+                                               nn.Linear(2 * config.model.dim_hidden, config.model.dim_hidden)))
 
     def forward(self, x, edge_index, batch, batch_size, **kwargs):
-        post_conv = self.batch_norm1(self.conv1(x, edge_index))
-        if self.prompts is not None:
-            post_conv = self.prompts[0](post_conv, batch)
-        if self.num_layer > 1:
-            post_conv = self.relu1(post_conv)
-            post_conv = self.dropout1(post_conv)
+        x = self.embedding(x)
+        if self.prompts is None:
+            return super().forward(x, edge_index, batch, batch_size, **kwargs)
 
+        virtual_node_feat = self.virtual_node_embedding(
+            torch.zeros(batch_size, device=self.config.device, dtype=torch.long))
+
+        x = self.prompts[0](x, batch)
+        post_conv = self.dropout1(self.relu1(self.batch_norm1(self.conv1(x, edge_index))))
         for i, (conv, batch_norm, relu, dropout) in enumerate(
                 zip(self.convs, self.batch_norms, self.relus, self.dropouts)
         ):
-            if self.prompts is not None:
-                post_conv = self.prompts[i + 1](post_conv, batch)
+            post_conv = self.prompts[i + 1](post_conv, batch)
+            # --- Add global info ---
+            post_conv = post_conv + virtual_node_feat[batch]
             post_conv = batch_norm(conv(post_conv, edge_index))
-            if i != len(self.convs) - 1:
+            if i < len(self.convs) - 1:
                 post_conv = relu(post_conv)
             post_conv = dropout(post_conv)
+            # --- update global info ---
+            if i < len(self.convs) - 1:
+                virtual_node_feat = self.virtual_mlp(
+                    self.virtual_pool(post_conv, batch, batch_size) + virtual_node_feat
+                )
+
         if self.without_readout or kwargs.get('without_readout'):
             return post_conv
         out_readout = self.readout(post_conv, batch, batch_size)
@@ -240,7 +216,7 @@ def evaluate(split: str, loader, model, config):
 
 
 def main(config_name, config_path, seed: int):
-    GNNSynEncoder.enable()
+    PromptedVNGINEncoder.enable()
     # load config for yml
     args = args_parser(
         [
