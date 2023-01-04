@@ -56,7 +56,6 @@ class Prompt(nn.Module):
 
     def forward(self, x: torch.Tensor, batch: torch.Tensor):
         if self.b is None:
-            print(1)
             self.b = torch.nn.Parameter(
                 torch.zeros(
                     max(batch) + 1,
@@ -191,7 +190,6 @@ def train_batch(data, config, optimizer, model) -> dict:
 
     # remove prompts
     model.feat_encoder.encoder.prompts = None
-    print(loss)
     return {'loss': loss.detach()}
 
 
