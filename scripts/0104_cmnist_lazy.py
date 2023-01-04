@@ -251,7 +251,7 @@ def main(config_name, config_path, seed: int):
     config = config_summoner(args)
     config.random_seed = seed
     config.train.train_bs = BATCH_SIZE
-    config.train.epoch = 100
+    config.train.max_epoch = 100
 
     # get model and data loader
     reset_random_seed(config)
