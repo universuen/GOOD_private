@@ -122,7 +122,7 @@ class GNNSynEncoder(GINs.GINEncoder):
 
     @classmethod
     def enable(cls):
-        GINvirtualnode.vGINEncoder = cls
+        GINs.GINEncoder = cls
 
 
 def logging_print(*args, **kwargs):
